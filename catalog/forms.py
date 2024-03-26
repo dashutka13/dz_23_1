@@ -51,3 +51,9 @@ class VersionForm(StyleFormMixin, forms.ModelForm):
             VersionForm.active_count = 0
             raise ValidationError('Возможна лишь одна активная версия. Пожалуйста, активируйте только 1 версию.')
         return cleaned_data
+
+
+class ModeratorPokemonForm(PokemonForm):
+    class Meta:
+        model = Product
+        fields = ('description', 'category', 'is_published', )

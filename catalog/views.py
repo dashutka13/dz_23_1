@@ -5,7 +5,7 @@ from django.urls import reverse_lazy, reverse
 from django.utils.text import slugify
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, TemplateView
 
-from catalog.forms import PokemonForm, VersionForm
+from catalog.forms import PokemonForm, VersionForm, ModeratorPokemonForm
 from catalog.models import Product, Blog, Version
 
 
@@ -35,16 +35,6 @@ class PokemonDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView)
 
 class PokemonUpdateView(LoginRequiredMixin, UpdateView):
     model = Product
-    form_class = PokemonForm
-
-    def get_queryset(self):
-        return super().get_queryset().filter(id=self.kwargs.get('pk'), owner=self.request.user)
-
-    def get_object(self, queryset=None):
-        self.object = super().get_object(queryset)
-        if self.object.owner != self.request.user:
-            raise Http404
-        return self.object
 
     def get_success_url(self):
         return reverse('catalog:update_product', args=[self.kwargs.get('pk')])
@@ -68,6 +58,15 @@ class PokemonUpdateView(LoginRequiredMixin, UpdateView):
             formset.instance = self.object
             formset.save()
         return super().form_valid(form)
+
+    def get_form_class(self):
+
+        if self.request.user == self.object.owner:
+            return PokemonForm
+        elif self.request.user.groups.filter(name='moderators'):
+            return ModeratorPokemonForm
+        else:
+            raise Http404
 
 
 class PokemonDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
